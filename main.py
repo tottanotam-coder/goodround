@@ -4,27 +4,6 @@ import logging
 import tempfile
 import asyncio
 
-import os
-import glob
-
-def install_ffmpeg():
-    if not os.path.exists("ffmpeg"):
-        print("⬇️ Скачиваем ffmpeg...")
-
-        os.system("wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz")
-        os.system("tar -xf ffmpeg-release-amd64-static.tar.xz")
-
-        folder = glob.glob("ffmpeg-*-amd64-static")[0]
-
-        os.system(f"cp {folder}/ffmpeg ./ffmpeg")
-        os.system("chmod +x ffmpeg")
-
-        print("✅ ffmpeg установлен")
-
-install_ffmpeg()
-
-os.environ["FFMPEG_BINARY"] = "./ffmpeg"
-
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
@@ -40,7 +19,7 @@ TOKEN = "8768146156:AAEm55y22YBGeRIOgSyqziLwuVkTPkzq9yY"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """The handler of the command /start"""
-    await update.message.reply_text("Загрузи своё видео 🎥")
+    await update.message.reply_text("Загрузи своё видео 📥")
 
 async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Video Handler: downloads, converts and send video message"""
