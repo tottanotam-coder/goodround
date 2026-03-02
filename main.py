@@ -34,7 +34,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # PUT YOUR TOKEN HERE
-TOKEN = "8768146156:AAEm55y22YBGeRIOgSyqziLwuVkTPkzq9yY"
+TOKEN = os.getenv("API_TOKEN")
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
