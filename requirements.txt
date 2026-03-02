@@ -1,0 +1,9 @@
+python-telegram-bot~=21.10
+moviepy~=1.0.3
+asyncio~=3.4.3
+choco~=1.0.5
+aiogram~=3.17.0
+numpy~=2.2.2
+imageio~=2.37.0
+imageio-ffmpeg~=0.6.0
+pip~=25.0
