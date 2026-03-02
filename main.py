@@ -4,6 +4,9 @@ import logging
 import tempfile
 import asyncio
 
+import os
+os.system("ffmpeg -version")
+
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
