@@ -36,7 +36,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Change YOUR_BOT_TOKEN_HERE on your token from @BotFather
-TOKEN = "8768146156:AAFdwlwPCDWKNyvlF6iEYap1ZbNyI8eeAsw"
+TOKEN = "8768146156:AAEm55y22YBGeRIOgSyqziLwuVkTPkzq9yY"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """The handler of the command /start"""
