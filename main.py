@@ -80,6 +80,9 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 outputpath
             )
 
+if not os.path.exists("./ffmpeg"):
+    raise Exception("ffmpeg not found in project folder")
+            
             process = subprocess.run(
                 ffmpegcmd,
                 stdout=subprocess.PIPE,
