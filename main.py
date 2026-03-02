@@ -19,18 +19,18 @@ TOKEN = "8768146156:AAFdwlwPCDWKNyvlF6iEYap1ZbNyI8eeAsw"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """The handler of the command /start"""
-    await update.message.reply_text("Send Me The Video")
+    await update.message.reply_text("Загрузи своё видео")
 
 async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Video Handler: downloads, converts and send video message"""
     # Checking, that a video exists in the message
     if not update.message.video:
-        await update.message.reply_text("Please send file")
+        await update.message.reply_text("Отправь видео")
         return
 
     logger.info("Received a video from the user: %s", update.effective_user.username)
-    status_message = await update.message.reply_text("Wait...")
-    status_message_2 = await update.message.reply_text("P.S. If the message doesn't arrive, just wait. The bot may be overloaded")
+    status_message = await update.message.reply_text("Терпение...")
+    status_message_2 = await update.message.reply_text("P.S. Если видео не пришло, подожди немного, бот может быть занят")
 
     try:
         video = update.message.video
@@ -55,7 +55,7 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             process = subprocess.run(ffmpegcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             if process.returncode != 0:
                 logger.error("ffmpeg error: %s", process.stderr)
-                await update.message.reply_text("An error occurred while processing the video.")
+                await update.message.reply_text("Ошибка при обработке видео")
                 return
 
             logger.info("Video successfully converted: %s", outputpath)
@@ -63,7 +63,7 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             await context.bot.deleteMessage(chat_id=update.effective_chat.id, message_id=status_message_2.message_id)
             await context.bot.deleteMessage(chat_id=update.effective_chat.id, message_id=status_message.message_id)
             await asyncio.sleep(2)
-            await update.message.reply_text("Video successfully converted!")
+            await update.message.reply_text("Видео готово!")
 
             # We are sending the converted video as a video message. (video note)
             with open(outputpath, "rb") as videofile:
