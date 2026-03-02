@@ -19,7 +19,7 @@ TOKEN = "8768146156:AAFdwlwPCDWKNyvlF6iEYap1ZbNyI8eeAsw"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """The handler of the command /start"""
-    await update.message.reply_text("Загрузи своё видео")
+    await update.message.reply_text("Загрузи своё видео 📥")
 
 async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Video Handler: downloads, converts and send video message"""
