@@ -34,7 +34,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # PUT YOUR TOKEN HERE
-TOKEN = "PUT_YOUR_TOKEN_HERE"
+TOKEN = "8768146156:AAEm55y22YBGeRIOgSyqziLwuVkTPkzq9yY"
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
