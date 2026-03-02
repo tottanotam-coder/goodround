@@ -5,6 +5,7 @@ import tempfile
 import asyncio
 import glob
 
+# --- Install ffmpeg if it is not present ---
 def install_ffmpeg():
     if not os.path.exists("ffmpeg"):
         print("Downloading ffmpeg...")
@@ -26,24 +27,25 @@ os.environ["FFMPEG_BINARY"] = "./ffmpeg"
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
-# Logging Settings
+
+# --- Logging ---
 logging.basicConfig(
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO
 )
+
 logger = logging.getLogger(__name__)
 
-# PUT YOUR TOKEN HERE
+
+# --- Token from BotHost ---
 TOKEN = os.getenv("API_TOKEN")
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Handler for /start command"""
     await update.message.reply_text("Загрузи своё видео 🎥")
 
 
 async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Video handler: downloads, converts and sends video note"""
 
     if not update.message.video:
         await update.message.reply_text("Отправь видео")
@@ -80,9 +82,6 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 outputpath
             )
 
-if not os.path.exists("./ffmpeg"):
-    raise Exception("ffmpeg not found in project folder")
-            
             process = subprocess.run(
                 ffmpegcmd,
                 stdout=subprocess.PIPE,
@@ -97,12 +96,12 @@ if not os.path.exists("./ffmpeg"):
 
             logger.info("Video successfully converted: %s", outputpath)
 
-            await context.bot.deleteMessage(
+            await context.bot.delete_message(
                 chat_id=update.effective_chat.id,
                 message_id=status_message.message_id
             )
 
-            await context.bot.deleteMessage(
+            await context.bot.delete_message(
                 chat_id=update.effective_chat.id,
                 message_id=status_message_2.message_id
             )
@@ -123,8 +122,7 @@ if not os.path.exists("./ffmpeg"):
         await update.message.reply_text(f"An error has occurred: {e}")
 
 
-def main() -> None:
-    """Main function to run the bot"""
+def main():
 
     app = Application.builder().token(TOKEN).build()
 
