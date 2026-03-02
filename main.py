@@ -3,9 +3,25 @@ import subprocess
 import logging
 import tempfile
 import asyncio
+import glob
 
-import os
-os.system("ffmpeg -version")
+def install_ffmpeg():
+    if not os.path.exists("ffmpeg"):
+        print("Downloading ffmpeg...")
+
+        os.system("wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz")
+        os.system("tar -xf ffmpeg-release-amd64-static.tar.xz")
+
+        folder = glob.glob("ffmpeg-*-amd64-static")[0]
+
+        os.system(f"cp {folder}/ffmpeg ./ffmpeg")
+        os.system("chmod +x ffmpeg")
+
+        print("ffmpeg installed")
+
+install_ffmpeg()
+
+os.environ["FFMPEG_BINARY"] = "./ffmpeg"
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
@@ -17,78 +33,105 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Change YOUR_BOT_TOKEN_HERE on your token from @BotFather
-TOKEN = "8768146156:AAFdwlwPCDWKNyvlF6iEYap1ZbNyI8eeAsw"
+# PUT YOUR TOKEN HERE
+TOKEN = "PUT_YOUR_TOKEN_HERE"
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """The handler of the command /start"""
+    """Handler for /start command"""
     await update.message.reply_text("Загрузи своё видео 🎥")
 
+
 async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Video Handler: downloads, converts and send video message"""
-    # Checking, that a video exists in the message
+    """Video handler: downloads, converts and sends video note"""
+
     if not update.message.video:
         await update.message.reply_text("Отправь видео")
         return
 
-    logger.info("Received a video from the user: %s", update.effective_user.username)
+    logger.info("Received video from user: %s", update.effective_user.username)
+
     status_message = await update.message.reply_text("Терпение...")
-    status_message_2 = await update.message.reply_text("P.S. Если видео не пришло, подожди немного, бот может быть занят")
+    status_message_2 = await update.message.reply_text(
+        "P.S. Если видео не пришло, подожди немного, бот может быть занят"
+    )
 
     try:
         video = update.message.video
         file = await video.get_file()
 
-        # Creating a temporary directory for storing files
         with tempfile.TemporaryDirectory() as tmpdirname:
+
             inputpath = os.path.join(tmpdirname, "inputvideo.mp4")
             outputpath = os.path.join(tmpdirname, "videonote.mp4")
 
-            # Downloading original video
             await file.download_to_drive(custom_path=inputpath)
+
             logger.info("Video saved: %s", inputpath)
 
-            # Forming the ffmpeg command:
-            # 1. Crop the video to a square with a size equal to the minimum side. (min(iw,ih)).
-            # 2. Scaling the result to 240x240 pixels (required size for video note).
-            # 3. The -y option allows you to overwrite the output file without prompting..
-            ffmpegcmd = "ffmpeg", "-y", "-i", inputpath, "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", "-c:a", "copy", outputpath
-            
+            ffmpegcmd = (
+                "./ffmpeg",
+                "-y",
+                "-i", inputpath,
+                "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240",
+                "-c:v", "libx264",
+                "-preset", "fast",
+                "-c:a", "copy",
+                outputpath
+            )
 
-            process = subprocess.run(ffmpegcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            process = subprocess.run(
+                ffmpegcmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True
+            )
+
             if process.returncode != 0:
                 logger.error("ffmpeg error: %s", process.stderr)
                 await update.message.reply_text("Ошибка при обработке видео")
                 return
 
             logger.info("Video successfully converted: %s", outputpath)
-            # Deleting the temporary message
-            await context.bot.deleteMessage(chat_id=update.effective_chat.id, message_id=status_message_2.message_id)
-            await context.bot.deleteMessage(chat_id=update.effective_chat.id, message_id=status_message.message_id)
+
+            await context.bot.deleteMessage(
+                chat_id=update.effective_chat.id,
+                message_id=status_message.message_id
+            )
+
+            await context.bot.deleteMessage(
+                chat_id=update.effective_chat.id,
+                message_id=status_message_2.message_id
+            )
+
             await asyncio.sleep(2)
+
             await update.message.reply_text("Видео готово!")
 
-            # We are sending the converted video as a video message. (video note)
             with open(outputpath, "rb") as videofile:
                 await context.bot.sendVideoNote(
                     chat_id=update.effective_chat.id,
                     video_note=videofile,
-                    duration=video.duration  # We specify the duration of the original video
+                    duration=video.duration
                 )
+
     except Exception as e:
         logger.exception("Error in video processing")
         await update.message.reply_text(f"An error has occurred: {e}")
 
+
 def main() -> None:
-    """The main function for launching a bot"""
+    """Main function to run the bot"""
+
     app = Application.builder().token(TOKEN).build()
 
-    # Registering command and message handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.VIDEO, videotonote))
 
-    logger.info("The bot is running...")
+    logger.info("Bot started...")
+
     app.run_polling()
+
 
 if __name__ == "__main__":
     main()
