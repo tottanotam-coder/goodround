@@ -19,17 +19,17 @@ TOKEN = os.environ.get("BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """The handler of the command /start"""
-    await update.message.reply_text("Загрузи своё видео 📥")
+    await update.message.reply_text("Загрузи своё видео 🎥")
 
 async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Video Handler: downloads, converts and send video message"""
     # Checking, that a video exists in the message
     if not update.message.video:
-        await update.message.reply_text("Отправь видео")
+        await update.message.reply_text("🎥 Отправь видео")
         return
 
     logger.info("Received a video from the user: %s", update.effective_user.username)
-    status_message = await update.message.reply_text("Терпение...")
+    status_message = await update.message.reply_text("⏰ Терпение...")
     status_message_2 = await update.message.reply_text("P.S. Если видео не пришло, подожди немного, бот может быть занят")
 
     try:
