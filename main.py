@@ -9,20 +9,19 @@ import stat
 subprocess.run(["apt-get", "update"], check=False)
 subprocess.run(["apt-get", "install", "-y", "wget", "xz-utils"], check=False)
 
-# Устанавливаем wget и xz-utils
-subprocess.run(["apt-get", "update"], check=False)
-subprocess.run(["apt-get", "install", "-y", "wget", "xz-utils"], check=False)
-
 # Скачиваем ffmpeg, если его нет
 if not os.path.exists("./ffmpeg"):
+    import subprocess
+    subprocess.run(["apt-get", "update"], check=False)
+    subprocess.run(["apt-get", "install", "-y", "wget", "xz-utils"], check=False)
     subprocess.run(["wget", "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"], check=True)
     subprocess.run(["tar", "-xf", "ffmpeg-release-amd64-static.tar.xz"], check=True)
-    subprocess.run(["cp", "ffmpeg-*-amd64-static/ffmpeg", "./ffmpeg"], shell=True, check=True)
+    subprocess.run("cp ffmpeg-*-amd64-static/ffmpeg ./ffmpeg", shell=True, check=True)
     subprocess.run(["chmod", "+x", "./ffmpeg"], check=True)
-    subprocess.run(["rm", "-rf", "ffmpeg-release-amd64-static.tar.xz", "ffmpeg-*-amd64-static"], check=True)
-    print("✅ ffmpeg downloaded and installed")
+    subprocess.run("rm -rf ffmpeg-release-amd64-static.tar.xz ffmpeg-*-amd64-static", shell=True, check=True)
+    print("✅ ffmpeg установлен")
 else:
-    print("✅ ffmpeg already exists")
+    print("✅ ffmpeg уже есть")
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
