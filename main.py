@@ -13,6 +13,10 @@ import stat
 subprocess.run(["apt-get", "update"], check=False)
 subprocess.run(["apt-get", "install", "-y", "wget"], check=False)
 
+# Устанавливаем wget и xz-utils
+subprocess.run(["apt-get", "update"], check=False)
+subprocess.run(["apt-get", "install", "-y", "wget", "xz-utils"], check=False)
+
 # Скачиваем ffmpeg, если его нет
 if not os.path.exists("./ffmpeg"):
     subprocess.run(["wget", "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"], check=True)
