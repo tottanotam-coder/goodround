@@ -4,13 +4,25 @@ import logging
 import tempfile
 import asyncio
 
+# Проверяем и устанавливаем wget, если нужно
+import subprocess
+import os
+import stat
+
+# Устанавливаем wget, если его нет
+subprocess.run(["apt-get", "update"], check=False)
+subprocess.run(["apt-get", "install", "-y", "wget"], check=False)
+
 # Скачиваем ffmpeg, если его нет
 if not os.path.exists("./ffmpeg"):
-    os.system("wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz")
-    os.system("tar -xf ffmpeg-release-amd64-static.tar.xz")
-    os.system("cp ffmpeg-*-amd64-static/ffmpeg ./ffmpeg")
-    os.system("chmod +x ffmpeg")
-    os.system("rm -rf ffmpeg-release-amd64-static.tar.xz ffmpeg-*-amd64-static")
+    subprocess.run(["wget", "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"], check=True)
+    subprocess.run(["tar", "-xf", "ffmpeg-release-amd64-static.tar.xz"], check=True)
+    subprocess.run(["cp", "ffmpeg-*-amd64-static/ffmpeg", "./ffmpeg"], shell=True, check=True)
+    subprocess.run(["chmod", "+x", "./ffmpeg"], check=True)
+    subprocess.run(["rm", "-rf", "ffmpeg-release-amd64-static.tar.xz", "ffmpeg-*-amd64-static"], check=True)
+    print("✅ ffmpeg downloaded and installed")
+else:
+    print("✅ ffmpeg already exists")
 
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
