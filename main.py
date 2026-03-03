@@ -3,15 +3,11 @@ import subprocess
 import logging
 import tempfile
 import asyncio
-
-# Проверяем и устанавливаем wget, если нужно
-import subprocess
-import os
 import stat
 
-# Устанавливаем wget, если его нет
+# Устанавливаем wget и xz-utils
 subprocess.run(["apt-get", "update"], check=False)
-subprocess.run(["apt-get", "install", "-y", "wget"], check=False)
+subprocess.run(["apt-get", "install", "-y", "wget", "xz-utils"], check=False)
 
 # Устанавливаем wget и xz-utils
 subprocess.run(["apt-get", "update"], check=False)
