@@ -4,6 +4,14 @@ import logging
 import tempfile
 import asyncio
 
+# Скачиваем ffmpeg, если его нет
+if not os.path.exists("./ffmpeg"):
+    os.system("wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz")
+    os.system("tar -xf ffmpeg-release-amd64-static.tar.xz")
+    os.system("cp ffmpeg-*-amd64-static/ffmpeg ./ffmpeg")
+    os.system("chmod +x ffmpeg")
+    os.system("rm -rf ffmpeg-release-amd64-static.tar.xz ffmpeg-*-amd64-static")
+
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, ContextTypes, filters
 
@@ -49,7 +57,7 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             # 1. Crop the video to a square with a size equal to the minimum side. (min(iw,ih)).
             # 2. Scaling the result to 240x240 pixels (required size for video note).
             # 3. The -y option allows you to overwrite the output file without prompting..
-            ffmpegcmd = "ffmpeg", "-y", "-i", inputpath, "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", "-c:a", "copy", outputpath
+            ffmpegcmd = "./ffmpeg", "-y", "-i", inputpath, "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", "-c:a", "copy", outputpath
             
 
             process = subprocess.run(ffmpegcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
