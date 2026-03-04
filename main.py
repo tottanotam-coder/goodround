@@ -38,7 +38,14 @@ TOKEN = os.environ.get("BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """The handler of the command /start"""
-    await update.message.reply_text("Загрузи своё видео 🎥")
+    await update.message.reply_text(
+        "Привет 👋\n"
+        "🎥 Просто отправь мне любое видео или анимацию, "
+        "и я превращу его в кружок\n\n"
+        "📌 Команды:\n"
+        "/start – запустить\n\n"
+        "👥 Автор: @TommiFox"
+    )
 
 async def author(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Обработчик команды /author"""
