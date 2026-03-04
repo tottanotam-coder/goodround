@@ -35,74 +35,71 @@ TOKEN = os.environ.get("BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """The handler of the command /start"""
-    await update.message.reply_text("Загрузи своё видео 🎥")
+    await update.message.reply_text(
+        "👋 Привет! Я умею превращать видео в кружки.\n\n"
+        "📹 Отправь мне видео, и я сделаю из него видеосообщение (кружок).\n\n"
+        "⚠️ Видео длиннее 60 секунд будет **автоматически обрезано** до 60 секунд.\n\n"
+        "👤 Автор: @TommiFox"
+    )
 
 async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Video Handler: downloads, converts and send video message"""
-    # Checking, that a video exists in the message
     if not update.message.video:
         await update.message.reply_text("🎥 Отправь видео")
         return
 
     logger.info("Received a video from the user: %s", update.effective_user.username)
-    status_message = await update.message.reply_text("⏰ Терпение...")
-    status_message_2 = await update.message.reply_text("P.S. Если видео не пришло, подожди немного, бот может быть занят")
+    status_message = await update.message.reply_text("⏰ Бот старается... 🍒")
 
     try:
         video = update.message.video
         file = await video.get_file()
 
-        # Creating a temporary directory for storing files
+        if video.duration > 60:
+            await status_message.edit_text("⏰ Видео длиннее 60 секунд, обрезаю...")
+
         with tempfile.TemporaryDirectory() as tmpdirname:
             inputpath = os.path.join(tmpdirname, "inputvideo.mp4")
             outputpath = os.path.join(tmpdirname, "videonote.mp4")
 
-            # Downloading original video
             await file.download_to_drive(custom_path=inputpath)
             logger.info("Video saved: %s", inputpath)
 
-            # Forming the ffmpeg command
-            ffmpegcmd = ["./ffmpeg", "-y", "-i", inputpath, 
-                        "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", 
-                        "-c:a", "copy", outputpath]
+            if video.duration > 60:
+                ffmpegcmd = ["./ffmpeg", "-y", "-i", inputpath, 
+                           "-t", "60",
+                           "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", 
+                           "-c:a", "copy", outputpath]
+            else:
+                ffmpegcmd = ["./ffmpeg", "-y", "-i", inputpath, 
+                           "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", 
+                           "-c:a", "copy", outputpath]
 
             process = subprocess.run(ffmpegcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             
             if process.returncode != 0:
-                error_text = process.stderr[-500:]
-                logger.error("🔥 FFMPEG ERROR: %s", process.stderr)
-                await update.message.reply_text(f"❌ Ошибка ffmpeg:\n{error_text}")
+                logger.error("ffmpeg error: %s", process.stderr)
+                await status_message.edit_text("❌ Ошибка при обработке")
                 return
 
-            logger.info("✅ FFmpeg успех!")
             logger.info("Video successfully converted: %s", outputpath)
+            await status_message.delete()
             
-            # Deleting the temporary message
-            await context.bot.deleteMessage(chat_id=update.effective_chat.id, message_id=status_message_2.message_id)
-            await context.bot.deleteMessage(chat_id=update.effective_chat.id, message_id=status_message.message_id)
-            await asyncio.sleep(2)
-            await update.message.reply_text("Видео готово!")
-
-            # We are sending the converted video as a video message. (video note)
             with open(outputpath, "rb") as videofile:
                 await context.bot.sendVideoNote(
                     chat_id=update.effective_chat.id,
                     video_note=videofile,
-                    duration=video.duration
+                    duration=min(video.duration, 60)
                 )
     except Exception as e:
         logger.exception("Error in video processing")
-        await update.message.reply_text(f"An error has occurred: {e}")
+        await status_message.edit_text("❌ Ошибка")
 
 def main() -> None:
     """The main function for launching a bot"""
     app = Application.builder().token(TOKEN).build()
-
-    # Registering command and message handlers
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.VIDEO, videotonote))
-
-    logger.info("The bot is running...")
     app.run_polling()
 
 if __name__ == "__main__":
