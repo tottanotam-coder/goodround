@@ -79,7 +79,7 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             # 1. Crop the video to a square with a size equal to the minimum side. (min(iw,ih)).
             # 2. Scaling the result to 240x240 pixels (required size for video note).
             # 3. The -y option allows you to overwrite the output file without prompting..
-            ffmpegcmd = "./ffmpeg", "-y", "-i", inputpath, "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", "-c:a", "copy", outputpath
+            ffmpegcmd = "./ffmpeg", "-y", "-t", "60", "-i", inputpath, "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", "-c:a", "aac", "-strict", "experimental", outputpath
             
 
             process = subprocess.run(ffmpegcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
@@ -88,7 +88,7 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 await update.message.reply_text("Ошибка при обработке видео")
                 return
 
-            logger.info("Video successfully converted: %s", outputpath)
+            logger.info("Видео успешно конвертировано: %s", outputpath)
             # Deleting the temporary message
             await context.bot.deleteMessage(chat_id=update.effective_chat.id, message_id=status_message_2.message_id)
             await context.bot.deleteMessage(chat_id=update.effective_chat.id, message_id=status_message.message_id)
@@ -100,11 +100,23 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 await context.bot.sendVideoNote(
                     chat_id=update.effective_chat.id,
                     video_note=videofile,
-                    duration=video.duration  # We specify the duration of the original video
+                    duration=min(video.duration, 60) if video.duration else 60  # We specify the duration of the original video
                 )
     except Exception as e:
-        logger.exception("Error in video processing")
-        await update.message.reply_text(f"An error has occurred: {e}")
+        logger.exception("Ошибка при обработке видео")
+        
+        # Переводим текст ошибки для пользователя
+        error_text = str(e)
+        
+        if "File is too big" in error_text:
+            msg = "❌ Ошибка: Файл слишком большой. Попробуй отправить видео поменьше (до 20-50 МБ)."
+        elif "Wrong file identifier" in error_text:
+            msg = "❌ Ошибка: Не удалось скачать файл. Попробуй еще раз."
+        else:
+            # Если ошибка неизвестна, пишем её как есть, но по-русски
+            msg = f"⚠️ Произошла ошибка: {error_text}"
+            
+        await update.message.reply_text(msg)
 
 def main() -> None:
     """The main function for launching a bot"""
