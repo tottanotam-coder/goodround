@@ -36,9 +36,9 @@ TOKEN = os.environ.get("BOT_TOKEN")
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """The handler of the command /start"""
     await update.message.reply_text(
-        "👋 Привет! Я умею превращать видео в кружки.\n\n"
-        "📹 Отправь мне видео или анимацию, и я сделаю из них видеосообщение (кружок).\n\n"
-        "⚠️ Видео длиннее 60 секунд будет **автоматически обрезано** до 60 секунд.\n\n"
+        "👋 Привет! Я умею превращать видео в кружки\n\n"
+        "📹 Отправь мне видео или анимацию (до 20 МБ) и я сделаю из них видеосообщение (кружок)\n\n"
+        "⚠️ Видео длиннее 60 секунд будет **автоматически обрезано** до 60 секунд\n\n"
         "👤 Автор: @TommiFox"
     )
 
@@ -54,6 +54,11 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         is_animation = True
     else:
         await update.message.reply_text("🎥 Отправь видео или анимацию")
+        return
+
+        # Проверка размера (лимит Telegram 20 МБ)
+    if media.file_size > 20 * 1024 * 1024:
+        await update.message.reply_text("❌ Файл слишком большой. Максимум 20 МБ")
         return
 
     logger.info("Received from user: %s", update.effective_user.username)
