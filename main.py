@@ -40,6 +40,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """The handler of the command /start"""
     await update.message.reply_text("Загрузи своё видео 🎥")
 
+async def author(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Обработчик команды /author"""
+    await update.message.reply_text("👤 Автор бота: @TommiFox")
+
 async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Video Handler: downloads, converts and send video message"""
     # Checking, that a video exists in the message
