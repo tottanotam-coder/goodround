@@ -3,7 +3,6 @@ import subprocess
 import logging
 import tempfile
 import asyncio
-import stat
 
 # Устанавливаем wget и xz-utils
 subprocess.run(["apt-get", "update"], check=False)
@@ -11,7 +10,6 @@ subprocess.run(["apt-get", "install", "-y", "wget", "xz-utils"], check=False)
 
 # Скачиваем ffmpeg, если его нет
 if not os.path.exists("./ffmpeg"):
-    import subprocess
     subprocess.run(["apt-get", "update"], check=False)
     subprocess.run(["apt-get", "install", "-y", "wget", "xz-utils"], check=False)
     subprocess.run(["wget", "https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz"], check=True)
@@ -33,7 +31,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-import os
 TOKEN = os.environ.get("BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -64,20 +61,22 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             await file.download_to_drive(custom_path=inputpath)
             logger.info("Video saved: %s", inputpath)
 
-            # Forming the ffmpeg command:
-            # 1. Crop the video to a square with a size equal to the minimum side. (min(iw,ih)).
-            # 2. Scaling the result to 240x240 pixels (required size for video note).
-            # 3. The -y option allows you to overwrite the output file without prompting..
-            ffmpegcmd = "./ffmpeg", "-y", "-i", inputpath, "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", "-c:a", "copy", outputpath
-            
+            # Forming the ffmpeg command
+            ffmpegcmd = ["./ffmpeg", "-y", "-i", inputpath, 
+                        "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", 
+                        "-c:a", "copy", outputpath]
 
             process = subprocess.run(ffmpegcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            
             if process.returncode != 0:
-                logger.error("ffmpeg error: %s", process.stderr)
-                await update.message.reply_text("Ошибка при обработке видео")
+                error_text = process.stderr[-500:]
+                logger.error("🔥 FFMPEG ERROR: %s", process.stderr)
+                await update.message.reply_text(f"❌ Ошибка ffmpeg:\n{error_text}")
                 return
 
+            logger.info("✅ FFmpeg успех!")
             logger.info("Video successfully converted: %s", outputpath)
+            
             # Deleting the temporary message
             await context.bot.deleteMessage(chat_id=update.effective_chat.id, message_id=status_message_2.message_id)
             await context.bot.deleteMessage(chat_id=update.effective_chat.id, message_id=status_message.message_id)
@@ -89,7 +88,7 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                 await context.bot.sendVideoNote(
                     chat_id=update.effective_chat.id,
                     video_note=videofile,
-                    duration=video.duration  # We specify the duration of the original video
+                    duration=video.duration
                 )
     except Exception as e:
         logger.exception("Error in video processing")
