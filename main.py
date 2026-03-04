@@ -42,6 +42,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "Привет 👋\n"
         "🎥 Просто отправь мне любое видео или анимацию, "
         "и я превращу его в кружок\n\n"
+        "✨ **Важно:** По правилам Telegram кружок может длиться только **60 секунд**. "
+        "Если ты пришлешь более длинное видео, я автоматически обрежу его до первой минуты!"
         "📌 Команды:\n"
         "/start – запустить\n\n"
         "👥 Автор: @TommiFox"
@@ -60,7 +62,7 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
     logger.info("Received a video from the user: %s", update.effective_user.username)
     status_message = await update.message.reply_text("⏰ Терпение...")
-    status_message_2 = await update.message.reply_text("P.S. Если видео не пришло, подожди немного, бот может быть занят")
+    status_message_2 = await update.message.reply_text("P.S. Бот всё еще обрбатывает видео ✨")
 
     try:
         video = update.message.video
