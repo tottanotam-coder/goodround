@@ -35,30 +35,36 @@ TOKEN = os.environ.get("BOT_TOKEN")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """The handler of the command /start"""
-    await update.message.reply_text("Загрузи своё видео 🎥")
+    await update.message.reply_text(
+        "👋 Привет! Я умею превращать видео в кружки.\n\n"
+        "📹 Отправь мне видео или анимацию, и я сделаю из них видеосообщение (кружок).\n\n"
+        "⚠️ Видео длиннее 60 секунд будет **автоматически обрезано** до 60 секунд.\n\n"
+        "👤 Автор: @TommiFox"
+    )
 
 async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handler for video and animation"""
-    # Проверяем, есть ли видео или анимация
-    if not (update.message.video or update.message.animation):
+    
+    # Проверяем, что прислали (видео или анимацию)
+    if update.message.video:
+        media = update.message.video
+        is_animation = False
+    elif update.message.animation:
+        media = update.message.animation
+        is_animation = True
+    else:
         await update.message.reply_text("🎥 Отправь видео или анимацию")
         return
 
     logger.info("Received from user: %s", update.effective_user.username)
-    
-    # Одно сообщение с вишенкой (как ты просила)
     status_message = await update.message.reply_text("⏰ Бот старается... 🍒")
 
     try:
-        # Определяем тип и получаем файл
-        if update.message.video:
-            media = update.message.video
-            duration = media.duration
-        else:
-            media = update.message.animation
-            duration = 0  # у анимации нет длительности
-
+        # Получаем файл
         file = await media.get_file()
+        
+        # Для анимации длительность = 0
+        duration = media.duration if not is_animation else 0
 
         with tempfile.TemporaryDirectory() as tmpdirname:
             inputpath = os.path.join(tmpdirname, "input.mp4")
@@ -67,10 +73,17 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
             await file.download_to_drive(custom_path=inputpath)
             logger.info("File saved: %s", inputpath)
 
-            # Конвертируем в кружок
-            ffmpegcmd = ["./ffmpeg", "-y", "-i", inputpath, 
-                        "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", 
-                        "-c:a", "copy", outputpath]
+            # Команда ffmpeg (для анимации звука нет, но это не важно)
+            if duration > 60:
+                ffmpegcmd = ["./ffmpeg", "-y", "-i", inputpath, 
+                           "-t", "60",
+                           "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", 
+                           "-c:a", "copy", outputpath]
+                await status_message.edit_text("⏰ Видео длиннее минуты, обрезаю...")
+            else:
+                ffmpegcmd = ["./ffmpeg", "-y", "-i", inputpath, 
+                           "-vf", "crop='min(iw,ih)':'min(iw,ih)',scale=240:240", 
+                           "-c:a", "copy", outputpath]
 
             process = subprocess.run(ffmpegcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             
@@ -81,13 +94,14 @@ async def videotonote(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
             logger.info("Conversion successful")
             await status_message.delete()
-            
-            # Отправляем кружок
-            with open(outputpath, "rb") as f:
+            await asyncio.sleep(2)
+            await update.message.reply_text("Готово!")
+
+            with open(outputpath, "rb") as videofile:
                 await context.bot.sendVideoNote(
                     chat_id=update.effective_chat.id,
-                    video_note=f,
-                    duration=duration
+                    video_note=videofile,
+                    duration=min(duration, 60) if duration > 0 else 0
                 )
     except Exception as e:
         logger.exception("Error")
@@ -98,7 +112,7 @@ def main() -> None:
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    # Добавляем обработку и видео, и анимаций
+    # Обрабатываем и видео, и анимации
     app.add_handler(MessageHandler(filters.VIDEO | filters.ANIMATION, videotonote))
 
     logger.info("The bot is running...")
