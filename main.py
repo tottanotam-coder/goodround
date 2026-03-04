@@ -105,6 +105,7 @@ def main() -> None:
 
     # Registering command and message handlers
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("author", author))
     app.add_handler(MessageHandler(filters.VIDEO, videotonote))
 
     logger.info("The bot is running...")
